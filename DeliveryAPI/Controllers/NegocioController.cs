@@ -3,10 +3,11 @@ using DeliveryAPI.Data.DTOs;
 using DeliveryAPI.Services;
 using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace DeliveryAPI.Controllers;
 
-
+//[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class NegocioController : ControllerBase

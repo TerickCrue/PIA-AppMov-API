@@ -8,6 +8,8 @@
 
         public string? NombreProducto { get; set; }
 
+        public string? imagenUrl { get; set; }
+
         public int? Cantidad { get; set; }
 
         public decimal? PrecioSubtotal { get; set; }

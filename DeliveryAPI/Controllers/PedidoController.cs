@@ -108,13 +108,17 @@ public class PedidoController : ControllerBase
 
         if (pedidoToDelete is not null)
         {
-            var result = isDeletable(id);
+            var result = await isDeletable(id);
 
-            if (!result.Equals("valid"))
-                return BadRequest(new {message = result});
+            if (result)
+            {
+                await _pedidoService.Delete(id);
+                return Ok();
+            }
+            else
+                return BadRequest(new { message = $"No se puede eliminar un pedido ya aceptado " });
 
-            await _pedidoService.Delete(id);
-            return Ok();
+            
 
         }
         else
@@ -122,20 +126,17 @@ public class PedidoController : ControllerBase
        
     }
 
-    public async Task<string> isDeletable(int id)
+    public async Task<bool> isDeletable(int id)
     {
-        string result = "valid";
-
+        var respuesta = true;
         var pedido = await _pedidoService.GetById(id);
         var estado = pedido.Status;
 
 
         if (estado.Equals("aceptado"))
-        {
-            result = $"No se puede eliminar un pedido en proceso a ser entregado";
-        }
+            respuesta = false;
 
-        return result;
+        return respuesta;
 
     }
 

@@ -25,17 +25,50 @@ public class CarritoService
     }
 
 
-    public async Task<IEnumerable<Carrito>> GetCarritosSinPedido(int usuarioId)
+    public async Task<IEnumerable<CarritoDtoOut>> GetCarritosSinPedido(int usuarioId)
     {
+
+
         var carritos = await _context.Carritos
-            .Where(c => c.UserId == usuarioId)
-            .ToListAsync();
+            .Where(c => c.UserId == usuarioId).Select(cd => new CarritoDtoOut
+            {
+                Id = cd.Id,
+                UserId = usuarioId,
+                BusinessId = cd.BusinessId,
+                NombreNegocio = cd.Business.Nombre,
+            }).ToListAsync();
 
         var pedidos = await _context.Pedidos.ToListAsync();
 
         var carritosSinPedido = carritos.Where(c => !pedidos.Any(p => p.CarritoId == c.Id)).ToList();
 
+        foreach(CarritoDtoOut carrito in carritosSinPedido)
+        {
+            carrito.Total = await CalcularTotal(carrito.Id);
+        }
         return carritosSinPedido;
+    }
+
+    public async Task<IEnumerable<CarritoConProductosDto>> GetCarritosConProductos(int usuarioId)
+    {
+
+        var listaCarritos = new List<CarritoConProductosDto>();
+
+        var carritos = await GetCarritosSinPedido(usuarioId);
+
+        foreach(CarritoDtoOut carrito in carritos)
+        {
+            var carritoConProductos = new CarritoConProductosDto();
+            var productos = await GetProductosDtoEnCarrito(carrito.Id);
+
+            carritoConProductos.Carrito = carrito;
+            carritoConProductos.Productos = productos;
+
+            listaCarritos.Add(carritoConProductos);
+        }
+
+        return listaCarritos;
+
     }
 
 
@@ -67,7 +100,7 @@ public class CarritoService
     }
 
 
-    public async Task<IEnumerable<CarritoProductoDtoOut>> GetProductosDtoEnCarrito(int carritoId)
+    public async Task<List<CarritoProductoDtoOut>> GetProductosDtoEnCarrito(int carritoId)
     {
         var productos = await _context.Carritoproductos
             .Where(cp => cp.CartId == carritoId)
@@ -75,6 +108,7 @@ public class CarritoService
             {
                 CartId = cp.CartId,
                 ProductoId = cp.ProductId,
+                imagenUrl = cp.Product.ImagenUrl,
                 NombreProducto = cp.Product.Nombre,
                 Cantidad = cp.Cantidad,
                 PrecioSubtotal = cp.PrecioSubtotal
@@ -84,6 +118,7 @@ public class CarritoService
         return productos;
     }
 
+    
 
     public async Task<Carrito> Create(CarritoDtoIn nuevoCarritoDto)
     {
@@ -202,12 +237,44 @@ public class CarritoService
 
 
 
-    public async Task<Carrito> ExisteCarrito(int usuarioId, int negocioId)
+    public async Task<Carrito?> ExisteCarrito(int usuarioId, int negocioId)
     {
         // Buscar el carrito correspondiente en la base de datos de forma asíncrona
         Carrito carrito = await _context.Carritos.FirstOrDefaultAsync(c => c.UserId == usuarioId && c.BusinessId == negocioId);
 
         // Devolver el carrito encontrado (puede ser null si no se encuentra)
         return carrito;
+    }
+
+    public async Task<bool> ProductoEnCarrito(int usuarioId, int negocioId, int productoId)
+    {
+        var response = false;
+
+        var carrito = await ExisteCarrito(usuarioId, negocioId);
+        if(carrito is not null)
+        {
+            var productoCarrito = await _context.Carritoproductos.FirstOrDefaultAsync(c => c.CartId == carrito.Id && c.ProductId == productoId);
+
+            if (productoCarrito is not null)
+            {
+                response = true;
+            }
+        }
+
+        return response;
+    }
+
+    public async Task<decimal> CalcularTotal(int carritoId)
+    {
+        var carrito = await GetById(carritoId);
+
+        if (carrito is not null)
+        {
+            var total = await _context.Carritoproductos.Where(cp => cp.CartId == carrito.Id).SumAsync(cp => cp.PrecioSubtotal) ?? 0;
+            return total;
+        }
+        else
+            return 0;
+
     }
 }

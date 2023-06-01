@@ -11,10 +11,12 @@ namespace DeliveryAPI.Controllers;
 public class ProductoController : ControllerBase
 {
     private readonly ProductoService _productoService;
+    private readonly NegocioService _negocioService;
 
-    public ProductoController(ProductoService productoService)
+    public ProductoController(ProductoService productoService, NegocioService negocioService)
     {
         _productoService = productoService;
+        _negocioService = negocioService;
     }
 
     [HttpGet("getall")]
@@ -35,6 +37,22 @@ public class ProductoController : ControllerBase
         }
         else
             return ProductNotFound(id);
+
+    }
+
+    [HttpGet("negocio/{negocioId}")]
+    public async Task<IActionResult> GetProductoByNegocioId(int negocioId)
+    {
+
+        var negocio = await _negocioService.GetById(negocioId);
+
+        if (negocio is not null)
+        {
+            var productos = await _productoService.GetByNegocioId(negocioId);
+            return Ok(productos);
+        }
+        else
+            return NegocioNotFound(negocioId);
 
     }
 
@@ -86,5 +104,9 @@ public class ProductoController : ControllerBase
     public NotFoundObjectResult ProductNotFound(int id)
     {
         return NotFound(new { message = $"El producto con ID = {id} no existe. " });
+    }
+    public NotFoundObjectResult NegocioNotFound(int id)
+    {
+        return NotFound(new { message = $"El negocio con ID = {id} no existe. " });
     }
 }

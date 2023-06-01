@@ -19,21 +19,32 @@ public class PedidoService
 
     public async Task<IEnumerable<PedidoDtoOut>> GetAll()
     {
-        return await _context.Pedidos.Select(p => new PedidoDtoOut {
+        var pedidos =  await _context.Pedidos.Select(p => new PedidoDtoOut {
             Id = p.Id,
             UserId = p.User.Id,
             NombreUsuario = p.User.Nombre,
             BusinessId = p.BusinessId,
             NombreNegocio = p.Business.Nombre,
+            imagenNegocio = p.Business.FotoPerfilUrl,
             DireccionEntrega = p.DireccionEntrega,
             MetodopagoId = p.MetodopagoId,
             MetodoPago = p.Metodopago.Metodo,
-            CarritoId = p.CarritoId,
             Total = p.Total,
             Fecha = p.Fecha,
             Status = p.Status,
+            CarritoId = p.CarritoId,
        
         }).ToListAsync();
+
+        foreach(var p in pedidos)
+        {
+
+            p.Productos = await _carritoService.GetProductosDtoEnCarrito(p.CarritoId);
+        }
+
+        return pedidos;
+
+
     }
 
 
@@ -44,7 +55,7 @@ public class PedidoService
 
     public async Task<PedidoDtoOut?> GetDtoById(int id)
     {
-        return await _context.Pedidos.
+        var pedido = await _context.Pedidos.
             Where(p => p.Id == id).
             Select(p => new PedidoDtoOut
             {
@@ -53,21 +64,26 @@ public class PedidoService
                 NombreUsuario = p.User.Nombre,
                 BusinessId = p.BusinessId,
                 NombreNegocio = p.Business.Nombre,
+                imagenNegocio = p.Business.FotoPerfilUrl,
                 DireccionEntrega = p.DireccionEntrega,
                 MetodopagoId = p.MetodopagoId,
                 MetodoPago = p.Metodopago.Metodo,
-                CarritoId = p.CarritoId,
                 Total = p.Total,
                 Fecha = p.Fecha,
-                Status = p.Status
+                Status = p.Status,
+                CarritoId = p.CarritoId,
 
             }).SingleOrDefaultAsync();
+
+        pedido.Productos = await _carritoService.GetProductosDtoEnCarrito(pedido.CarritoId);
+
+        return pedido;
 
     }
 
     public async Task<IEnumerable<PedidoDtoOut>> GetByNegocioId(int negocioId)
     {
-        return await _context.Pedidos.Where(p => p.BusinessId == negocioId).
+        var pedidos =  await _context.Pedidos.Where(p => p.BusinessId == negocioId).
             Select(p => new PedidoDtoOut
             {
                 Id = p.Id,
@@ -75,20 +91,28 @@ public class PedidoService
                 NombreUsuario = p.User.Nombre,
                 BusinessId = p.BusinessId,
                 NombreNegocio = p.Business.Nombre,
+                imagenNegocio = p.Business.FotoPerfilUrl,
                 DireccionEntrega = p.DireccionEntrega,
                 MetodopagoId = p.MetodopagoId,
                 MetodoPago = p.Metodopago.Metodo,
-                CarritoId = p.CarritoId,
                 Total = p.Total,
                 Fecha = p.Fecha,
-                Status = p.Status
+                Status = p.Status,
+                CarritoId = p.CarritoId,
 
             }).ToListAsync();
+
+        foreach (var p in pedidos)
+        {
+            p.Productos = await _carritoService.GetProductosDtoEnCarrito(p.CarritoId);
+        }
+
+        return pedidos;
     }
 
     public async Task<IEnumerable<PedidoDtoOut>> GetByUserId(int userId)
     {
-        return await _context.Pedidos.Where(p => p.UserId == userId).
+        var pedidos = await _context.Pedidos.Where(p => p.UserId == userId).
             Select(p => new PedidoDtoOut
             {
                 Id = p.Id,
@@ -96,15 +120,23 @@ public class PedidoService
                 NombreUsuario = p.User.Nombre,
                 BusinessId = p.BusinessId,
                 NombreNegocio = p.Business.Nombre,
+                imagenNegocio = p.Business.FotoPerfilUrl,
                 DireccionEntrega = p.DireccionEntrega,
                 MetodopagoId = p.MetodopagoId,
                 MetodoPago = p.Metodopago.Metodo,
-                CarritoId = p.CarritoId,
                 Total = p.Total,
                 Fecha = p.Fecha,
-                Status = p.Status
+                Status = p.Status,
+                CarritoId = p.CarritoId,
 
             }).ToListAsync();
+
+        foreach (var p in pedidos)
+        {
+            p.Productos = await _carritoService.GetProductosDtoEnCarrito(p.CarritoId);
+        }
+
+        return pedidos;
     }
 
     public async Task<Pedido> Create(PedidoDtoIn nuevoPedidoDto)

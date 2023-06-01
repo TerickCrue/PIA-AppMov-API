@@ -50,6 +50,16 @@ public class CarritoController : ControllerBase
         return NotFound();
     }
 
+    [HttpGet("usuario/{usuarioId}/productos")]
+    public async Task<IActionResult> GetCarritosConProductos(int usuarioId)
+    {
+        var carritos = await _carritoService.GetCarritosConProductos(usuarioId);
+        if (carritos is not null)
+            return Ok(carritos);
+
+        return NotFound();
+    }
+
     [HttpGet("negocio/{negocioId}")]
     public async Task<IActionResult> GetCarritosOfNegocio(int negocioId)
     {
@@ -92,6 +102,13 @@ public class CarritoController : ControllerBase
     [HttpPost("agregar/usuario/{usuarioId}/negocio/{negocioId}")]
     public async Task<IActionResult> AgregarProductoAlCarrito(int usuarioId, int negocioId, CarritoProductoDtoIn productoDto)
     {
+        var respuesta = await _carritoService.ProductoEnCarrito(usuarioId, negocioId, productoDto.ProductoId);
+
+        if (respuesta)
+        {
+            return BadRequest(new { message = $"Este producto ya se encuentra en tu carrito" });
+        }
+
         var productoAgregado = await _carritoService.AgregarProductoACarrito(usuarioId, negocioId, productoDto);
         return CreatedAtAction(nameof(GetProductosEnCarrito), new { carritoId = productoAgregado.CartId }, productoAgregado);
     }

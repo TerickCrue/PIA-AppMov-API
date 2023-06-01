@@ -1,4 +1,5 @@
-﻿using DeliveryAPI.Data.Models;
+﻿using DeliveryAPI.Data.DTOs;
+using DeliveryAPI.Data.Models;
 using DeliveryAPI.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -25,7 +26,7 @@ public class UsuarioController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetUsuarioById(int id)
     {
-        var usuario = await _usuarioService.GetById(id);
+        var usuario = await _usuarioService.GetDtoById(id);
 
         if (usuario is null)
             return UserNotFound(id);
@@ -47,9 +48,15 @@ public class UsuarioController : ControllerBase
     [HttpPost("create")]
     public async Task<IActionResult> CreateUsuario(Usuario usuario)
     {
+        var existingUser = await _usuarioService.GetByEmail(usuario.Email);
 
-        var newUsuario = await _usuarioService.Create(usuario);
-        return CreatedAtAction(nameof(GetUsuarioById), new { id = newUsuario.Id }, newUsuario);
+        if (existingUser is null)
+        {
+            var newUsuario = await _usuarioService.Create(usuario);
+            return CreatedAtAction(nameof(GetUsuarioById), new { id = newUsuario.Id }, newUsuario);
+        }
+        return BadRequest(new { message = $"Email ya registrado " });
+        
     }
 
     [HttpPut("update/{id}")]
@@ -71,6 +78,45 @@ public class UsuarioController : ControllerBase
             return UserNotFound(id);
 
     }
+
+    [HttpPut("update/password/{id}")]
+    public async Task<IActionResult> UpdateContraseñaUsuario(int id, UserPwdChangeDto userData)
+    {
+
+        var response = await _usuarioService.UpdatePassword(id, userData);
+
+
+        if (!response)
+            return BadRequest(new { message = $"Contraseña actual incorrecta" });
+        else
+        {
+            return Ok(new { message = $"Contraseña actualizada con éxito" });
+        }
+    }
+
+    [HttpPut("update/email/{id}")]
+    public async Task<IActionResult> UpdateEmailUsuario(int id, UserEmailChangeDto userData)
+    {
+
+        var verif = await _usuarioService.VerifyPwd(userData.EmailActual, userData.Pwd);
+
+        if (!verif)
+            return BadRequest(new { message = $"Contraseña actual incorrecta" });
+
+        var newCreds = await _usuarioService.UpdateEmail(id, userData);
+
+        if(newCreds is null)
+        {
+            return BadRequest(new { message = $"Email ya registrado" });
+            
+        }
+
+        return Ok(newCreds);
+
+
+    }
+
+
 
     [HttpDelete("delete/{id}")]
     public async Task<IActionResult> DeleteUsuario(int id)

@@ -1,4 +1,6 @@
-﻿namespace DeliveryAPI.Data.DTOs
+﻿using DeliveryAPI.Data.Models;
+
+namespace DeliveryAPI.Data.DTOs
 {
     public class PedidoDtoOut
     {
@@ -12,6 +14,8 @@
 
         public string? NombreNegocio { get; set; }
 
+        public string? imagenNegocio { get; set; }
+
         public string? DireccionEntrega { get; set; }
 
         public decimal Total { get; set; }
@@ -20,10 +24,11 @@
 
         public string? MetodoPago { get; set; }
 
-        public int CarritoId { get; set; }
-
         public DateTime? Fecha { get; set; }
 
         public string Status { get; set; } = null!;
+
+        public int CarritoId { get; set; }
+        public List<CarritoProductoDtoOut> Productos { get; set; }
     }
 }
